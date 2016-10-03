@@ -22,9 +22,9 @@ public class Game2048View extends JPanel{
 	  private static final int TILE_SIZE = 64;
 	  private static final int TILES_MARGIN = 16;
 	  
-	  private Game2048 game;
+	  private Game2048Bit game;
 	  
-	  public Game2048View(Game2048 game){
+	  public Game2048View(Game2048Bit game){
 		  this.game=game;
 	  }
 	  

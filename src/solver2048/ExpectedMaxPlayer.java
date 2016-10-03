@@ -38,7 +38,7 @@ public class ExpectedMaxPlayer implements Player{
 
 
 	@Override
-	public int getMove(Game2048 game) {
+	public int getMove(Game2048Bit game) {
 		// Shuffles moves to prevent getting stuck with equal utilities
 		List<Integer> moves=game.getMoves();
 		Collections.shuffle(moves);
@@ -60,7 +60,6 @@ public class ExpectedMaxPlayer implements Player{
 				}
 			}
 			game.undoMove();
-			transpositionTable.remove(game.hashCode());
 		}	
 		movesMade++;
 		game.clearPrevs();
@@ -73,13 +72,12 @@ public class ExpectedMaxPlayer implements Player{
 	 * @param d
 	 * @return
 	 */
-	private int maxUtility(Game2048 game, int depth, int numFours){
+	private int maxUtility(Game2048Bit game, int depth, int numFours){
 		if(transpositionTable.containsKey(game.hashCode()))
 			return transpositionTable.get(game.hashCode());
 		nodesVisited++;
 		if(cutoffTest(game,depth)){
 			int util=utility(game);
-			// Transposition table only useful when testing new pieces
 			if(PIECEUTILITY){
 				transpositionTable.put(game.hashCode(), util);
 			}
@@ -108,7 +106,7 @@ public class ExpectedMaxPlayer implements Player{
 	}
 
 
-	private int newPieceUtility(Game2048 game, int depth, int numFours) {
+	private int newPieceUtility(Game2048Bit game, int depth, int numFours) {
 		double sum=0;
 		List<Integer> availableTiles=game.availableSpace();
 		for(Integer t:availableTiles){
@@ -140,7 +138,7 @@ public class ExpectedMaxPlayer implements Player{
 				"\nNumber of moves: "+ movesMade);
 	}
 	
-	private int utility(Game2048 game) {
+	private int utility(Game2048Bit game) {
 		if(game.gameOver() && !game.winGame())
 			return 0;
 		int score=game.getScore();
@@ -217,7 +215,7 @@ public class ExpectedMaxPlayer implements Player{
 		return score;
 	}
 
-	private boolean cutoffTest(Game2048 game, int depth) {
+	private boolean cutoffTest(Game2048Bit game, int depth) {
 		return !game.canMove() || depth>=maxDepth || game.winGame(); 
 	}
 

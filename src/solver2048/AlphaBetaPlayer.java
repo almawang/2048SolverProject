@@ -18,7 +18,7 @@ public class AlphaBetaPlayer implements Player{
 	
 	// Heuristics
 	private final boolean BLANKSPACES=true; // Prefers moves that provide more empty spaces
-	private final boolean EDGES=true;	// Higher value tiles on the edges and corners
+	private final boolean EDGES=false;	// Higher value tiles on the edges and corners
 	private final boolean MAXCORNER=true;	// The highest value tile in a corner
 	private final boolean MONOTONIC=true;	// Penalty if edges not either decreasing or increasing
 	
@@ -39,7 +39,7 @@ public class AlphaBetaPlayer implements Player{
 
 
 	@Override
-	public int getMove(Game2048 game) {
+	public int getMove(Game2048Bit game) {
 		// Shuffles moves to prevent getting stuck with equal utilities
 		List<Integer> moves=game.getMoves();
 		Collections.shuffle(moves);
@@ -54,7 +54,6 @@ public class AlphaBetaPlayer implements Player{
 				}
 			}
 			game.undoMove();
-			transpositionTable.remove(game.hashCode());
 		}	
 		movesMade++;
 		game.clearPrevs();
@@ -67,7 +66,7 @@ public class AlphaBetaPlayer implements Player{
 	 * @param d
 	 * @return
 	 */
-	private int maxUtility(Game2048 game, int depth, int numFours, int alpha, int beta){
+	private int maxUtility(Game2048Bit game, int depth, int numFours, int alpha, int beta){
 		nodesVisited++;
 		if(cutoffTest(game,depth)){
 			if(transpositionTable.containsKey(game.hashCode()))
@@ -98,7 +97,7 @@ public class AlphaBetaPlayer implements Player{
 	}
 
 
-	private int newPieceUtility(Game2048 game, int depth, int numFours, int alpha, int beta) {
+	private int newPieceUtility(Game2048Bit game, int depth, int numFours, int alpha, int beta) {
 		int minUtility=Integer.MAX_VALUE;
 		List<Integer> availableTiles=game.availableSpace();
 		for(Integer t:availableTiles){
@@ -153,7 +152,7 @@ public class AlphaBetaPlayer implements Player{
 				"\nNumber of moves: "+ movesMade);
 	}
 	
-	private int utility(Game2048 game) {
+	private int utility(Game2048Bit game) {
 		if(game.gameOver() && !game.winGame())
 			return 0;
 		int score=game.getScore();
@@ -230,7 +229,7 @@ public class AlphaBetaPlayer implements Player{
 		return score;
 	}
 
-	private boolean cutoffTest(Game2048 game, int depth) {
+	private boolean cutoffTest(Game2048Bit game, int depth) {
 		return !game.canMove() || depth>=maxDepth || game.winGame(); 
 	}
 

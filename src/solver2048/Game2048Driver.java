@@ -5,6 +5,8 @@
  */
 package solver2048;
 
+import java.util.Scanner;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
@@ -18,12 +20,13 @@ public class Game2048Driver{
 		for(int i=0;i<n;i++){
 			
 			// Set target score of the game
-		     Game2048 game2048=new Game2048();
+			Game2048Bit game2048 = new Game2048Bit();
+		    // Game2048 game2048=new Game2048();
 		    // Game2048 game2048=new Game2048(4096);
 		    // Game2048 game2048=new Game2048(50000); // Test maximum achievable score
 			
 			// Uncomment type of player used   
-		    Player player=new ExpectedMaxPlayer(3);
+		    Player player=new ExpectedMaxPlayer(5);
 		   // Player player=new AlphaBetaPlayer(5);
 		   // Player player=new RandomPlayer(100);
 		    
@@ -49,7 +52,41 @@ public class Game2048Driver{
 		System.out.println("Wins: "+wins +" Losses: "+losses);
 	}
 	
+	public static void testBitRep(){
+		
+		JFrame game = new JFrame();
+	    game.setTitle("2048 Game");
+	    game.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+	    game.setSize(340, 400);
+	    game.setResizable(false);
+	    
+	    // Set target score of the game
+	     Game2048Bit game2048=new Game2048Bit();
+	    // Game2048 game2048=new Game2048(4096);
+	    // Game2048 game2048=new Game2048(50000); // Test maximum achievable score
+	    
+	    Game2048View view=new Game2048View(game2048);
+	    game.add(view);
+	    game.setLocationRelativeTo(null);
+	    game.setVisible(true);
+		
+		Scanner scan = new Scanner(System.in);
+		int next = scan.nextInt();
+		while(next != 30){
+			if (next < 4) {
+				game2048.makeMove(next);
+			} else {
+				System.out.println(game2048.tileAt(next));
+			}
+			view.repaint();
+			next = scan.nextInt();
+		}
+		scan.close();
+	}
+	
 	public static void main(String[] args) {
+		
+		
 		//benchmark(10);
 	    JFrame game = new JFrame();
 	    game.setTitle("2048 Game");
@@ -58,7 +95,7 @@ public class Game2048Driver{
 	    game.setResizable(false);
 	    
 	    // Set target score of the game
-	     Game2048 game2048=new Game2048();
+	     Game2048Bit game2048=new Game2048Bit();
 	    // Game2048 game2048=new Game2048(4096);
 	    // Game2048 game2048=new Game2048(50000); // Test maximum achievable score
 	    
@@ -69,16 +106,17 @@ public class Game2048Driver{
 	    
 	    
 	    // Uncomment type of player used   
-	   // Player player=new ExpectedMaxPlayer(3);
-	   // Player player=new AlphaBetaPlayer(5);
-	    Player player=new RandomPlayer(100);
+	    Player player=new ExpectedMaxPlayer(7);
+	    //Player player=new AlphaBetaPlayer(7);
+	    // Player player=new RandomPlayer(100);
+	    //Player player = new HumanPlayer();
 	    
 	    long startTime=System.currentTimeMillis();
 	    long prevTime=startTime;
 	    int move=0;
 	    
     	try {
-			Thread.sleep(1000);
+			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -92,7 +130,7 @@ public class Game2048Driver{
 	    	
 	    	// Print stats as player makes moves
 	    	System.out.println("Time taken to make move "+move+": "+(newTime-prevTime)/1000.0000);
-	    	player.printStats();
+	    	//player.printStats();
 	    	
 	    	prevTime=newTime;
 		    view.repaint();	
@@ -114,8 +152,6 @@ public class Game2048Driver{
 	    	System.out.println("Lost");
 	    player.printStats();
 	    long time=System.currentTimeMillis()-startTime;
-	    System.out.println("Time: "+time/1000.0000);
-	    
+	    System.out.println("Time: "+time/1000.0000);	    
 	  }
-
 }
