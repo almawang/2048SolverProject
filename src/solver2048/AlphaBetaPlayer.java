@@ -41,9 +41,8 @@ public class AlphaBetaPlayer implements Player{
 	@Override
 	public int getMove(Game2048Bit game) {
 		// Shuffles moves to prevent getting stuck with equal utilities
-		List<Integer> moves=game.getMoves();
-		Collections.shuffle(moves);
-		int bestMove=moves.get(0);		
+		int[] moves=game.getMoves();
+		int bestMove=moves[(int)(Math.random()*moves.length)];		
 		int bestUtility=0;
 		for(int move:moves){
 			if(game.makeMove(move)){
@@ -76,7 +75,7 @@ public class AlphaBetaPlayer implements Player{
 			return util;
 		}
 		
-		List<Integer> moves=game.getMoves();
+		int[] moves=game.getMoves();
 		int bestUtility=0;
 		for(int move:moves){
 			if(game.makeMove(move)){

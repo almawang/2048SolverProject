@@ -106,17 +106,17 @@ public class Game2048Driver{
 	    
 	    
 	    // Uncomment type of player used   
-	    Player player=new ExpectedMaxPlayer(7);
+	    // Player player=new ExpectedMaxPlayer(12);
 	    //Player player=new AlphaBetaPlayer(7);
 	    // Player player=new RandomPlayer(100);
-	    //Player player = new HumanPlayer();
+	     Player player = new HumanPlayer();
 	    
 	    long startTime=System.currentTimeMillis();
 	    long prevTime=startTime;
 	    int move=0;
 	    
     	try {
-			Thread.sleep(10000);
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -124,7 +124,7 @@ public class Game2048Driver{
 	    
 	    while(!game2048.gameOver()){
 	    	move++;
-	    	if(game2048.makeMove(player.getMove(game2048)))
+	    	if(game2048.makeMove(player.getMove(new Game2048Bit(game2048))))
 	    		game2048.addTile();
 	    	long newTime=System.currentTimeMillis();
 	    	
@@ -135,11 +135,9 @@ public class Game2048Driver{
 	    	prevTime=newTime;
 		    view.repaint();	
 		    
-		 //   System.gc();
-		    
 		    // Prevent threading issues with display
 	    	try {
-				Thread.sleep(5);
+				Thread.sleep(50);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

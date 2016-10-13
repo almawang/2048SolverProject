@@ -21,6 +21,7 @@ public class Game2048Bit {
 	public static final int RIGHT=1;
 	public static final int UP=2;
 	public static final int DOWN=3;
+	public static final int[] MOVES = {LEFT, RIGHT, UP, DOWN};
 	public static final double PIECE_PROB = .9; // probability of a new piece being a 2
 	
 	private static final long BITMASK = 0b1111;
@@ -32,9 +33,13 @@ public class Game2048Bit {
 	private long myTiles;
 	private LinkedList<Long> prevMoves=new LinkedList<Long>();
 	private LinkedList<Integer> prevScores=new LinkedList<Integer>();
-	
+	long[] leftMoveLookup = new long[(int)Math.pow(2,16)];
+	long[] rightMoveLookup = new long[(int)Math.pow(2, 16)];
+	long[] upMoveLookup = new long[(int)Math.pow(2, 16)];
+	long[] downMoveLookup = new long[(int)Math.pow(2, 16)];
 	  
 	  public Game2048Bit() {
+		  computeMoveLookup();
 		  resetGame();
 	  }
 	  
@@ -43,6 +48,7 @@ public class Game2048Bit {
 	   */
 	  public Game2048Bit(int target){
 		  this.target=target;
+		  computeMoveLookup();
 		  resetGame();
 	  }
 	  
@@ -50,10 +56,19 @@ public class Game2048Bit {
 	   * Make a copy of a game
 	   */
 	  public Game2048Bit(Game2048Bit game){
-		  myTiles=game.myTiles;
-		  myScore=game.myScore;
-		  target=game.target;
+		  myTiles = game.myTiles;
+		  myScore = game.myScore;
+		  target = game.target;
+		  computeMoveLookup();
 	  }
+	  
+		private void computeMoveLookup() {
+			for(int line = 0; line < leftMoveLookup.length; line ++) {
+				leftMoveLookup[line] = left(line);
+				rightMoveLookup[line] = right(line);
+			}
+		}
+
 	  
 	  /**
 	   * Reset the board
@@ -77,12 +92,19 @@ public class Game2048Bit {
 	  /**
 	   * Returns a list of possible directions a player can move
 	   */
-	  public List<Integer> getMoves(){
-		  LinkedList<Integer> moves=new LinkedList<Integer>();
-		  int[] dirs={LEFT,RIGHT,UP,DOWN};
-		  for(int d:dirs)
-			  moves.add(d);
-		  return moves;
+	  public int[] getMoves(){
+		  List<Integer> moves = new LinkedList<Integer>();
+		  for (int m: MOVES) {
+			  if(makeMove(m)){
+				  moves.add(m);
+			  }
+			  undoMove();
+		  }
+		  int[] goodMoves = new int[moves.size()];
+		  for (int x = 0; x < moves.size(); x++) {
+			  goodMoves[x] = moves.get(x);
+		  }
+		  return goodMoves;
 	  }
 	  
 	  public boolean makeMove(int move){
@@ -91,21 +113,35 @@ public class Game2048Bit {
 		  prevScores.addFirst(myScore);
 		  switch(move){
 		  	case LEFT:
-				  needTile=left();
-				  break;
+		  		for (int i=0; i<4; i++){
+		  			int oldLine = (int)((myTiles >>> i*16) & LINE_BITMASK);
+		  			long newLine = leftMoveLookup[oldLine];
+		  			if (oldLine != newLine){
+		  				myTiles &= ~(LINE_BITMASK << i*16);
+		  				myTiles |= (newLine << i*16);
+		  				needTile = true;
+		  			}
+		  		}
+				break;
 		  	case RIGHT:
-		  		myTiles = rotate(180);
-		  		needTile=left();
-		  		myTiles = rotate(180);
-		  		break;
+		  		for (int i=0; i<4; i++){
+		  			int oldLine = (int)((myTiles >>> i*16) & LINE_BITMASK);
+		  			long newLine = rightMoveLookup[oldLine];
+		  			if (oldLine != newLine){
+		  				myTiles &= ~(LINE_BITMASK << i*16);
+		  				myTiles |= (newLine << i*16);
+		  				needTile = true;
+		  			}
+		  		}
+				break;
 		  	case UP:
 			    myTiles = rotate(270);
-			    needTile=left();
+			    needTile = makeMove(LEFT);
 			    myTiles = rotate(90);
 			    break;
 		  	case DOWN:
 		  		myTiles = rotate(90);
-			    needTile=left();
+			    needTile = makeMove(LEFT);
 			    myTiles = rotate(270);
 		  }
 		  return needTile;
@@ -118,14 +154,23 @@ public class Game2048Bit {
 	  
 	  private boolean left() {
 		  boolean needAddTile = false;
-		  for (int i = 0; i < 4; i++) {
+		/*  for (int i = 0; i < 4; i++) {
 	    	long line = getLine(i);
-			long merged = mergeLine(moveLine(line));
+			long merged = left(line);
 			setLine(i, merged);
 			if (!needAddTile && !compare(line, merged)) {
 			    needAddTile = true;
 			}
-		  }
+		  }*/
+	  		for (int i=0; i<4; i++){
+	  			int oldLine = (int)((myTiles >>> i*4) & LINE_BITMASK);
+	  			long newLine = leftMoveLookup[oldLine];
+	  			if (oldLine != newLine){
+	  				myTiles &= ~(LINE_BITMASK << i*16);
+	  				myTiles |= newLine << i*16;
+	  				needAddTile = true;
+	  			}
+	  		}
 		  return needAddTile;
 	  }
 	  
@@ -266,57 +311,71 @@ public class Game2048Bit {
 	    return newTiles;
 	  }
 
-	  private long moveLine(long oldLine) {
-	    LinkedList<Integer> l = new LinkedList<Integer>();
-	    for (int i = 0; i < 4; i++) {
-	    	int value = (int)((oldLine >>> i*4) & BITMASK);
-		    if (value != 0)
-		    	l.add(value);
-	    }
-	    if (l.size() == 0) {
-	      return oldLine;
-	    } else {
-	    long newLine = 0;
-	      for (int i = 0; i < 4; i++) {
-	    	  if(!l.isEmpty())
-	    		  newLine |= l.remove() << i*4;
-	      }
-	      return newLine;
-	    }
-	  }
-
-	  private long mergeLine(long oldLine) {
-	    LinkedList<Integer> list = new LinkedList<Integer>();
-	    for (int i = 0; i < 4; i++) {
-	      int num = (int)((oldLine >>> i*4) & BITMASK);
-	      if (i < 3 && num != 0 && num == (int)((oldLine >>> (i+1)*4) & BITMASK)) {
-	        int value = num;
-	        myScore += TILE_VALUES[value];
-	        list.add(num+1);
-	        i++;
-	      } else if(num != 0) {
-	    	  list.add(num);
-	      }
-	    }
-	    if (list.size() == 0) {
-	      return oldLine;
-	    } else {
-		    long newLine = 0;
-		      for (int i = 0; i < 4; i++) {
-		    	  if(!list.isEmpty())
-		    		  newLine |= list.remove() << i*4;
+	  private long left (long oldLine) {
+		  LinkedList<Long> list = new LinkedList<Long>();
+		  long prev = 0; 
+		    for (int i = 0; i < 4; i++) {
+		      long num = ((oldLine >>> i*4) & BITMASK);
+		      if (num != 0) {
+		    	  if (num == prev){
+		    		  list.removeLast(); 
+		    		  list.add(num+1);
+		    		  prev = 0;
+		    		  myScore += TILE_VALUES[(int)num];
+		    	  } else {
+		    		  list.add(num);
+		    		  prev = num;
+		    	  }
 		      }
-		      return newLine;
-	    }
+		    }   
+		    if (list.size() == 0) {
+		      return oldLine;
+		    } else {
+			    long newLine = 0;
+			      for (int i = 0; i < 4; i++) {
+			    	  if(!list.isEmpty())
+			    		  newLine |= list.remove() << i*4;
+			      }
+			      return newLine;
+		    }
 	  }
-
-	  private long getLine(int i) {
-	    return LINE_BITMASK & (myTiles >>> i*16);
+	  
+	  private long right (long oldLine) {
+		  LinkedList<Long> list = new LinkedList<Long>();
+		  long prev = 0; 
+		    for (int i = 3; i > -1; i--) {
+		      long num = ((oldLine >>> i*4) & BITMASK);
+		      if (num != 0) {
+		    	  if (num == prev){
+		    		  list.removeLast(); 
+		    		  list.add(num+1);
+		    		  prev = 0;
+		    		  myScore += TILE_VALUES[(int)num];
+		    	  } else {
+		    		  list.add(num);
+		    		  prev = num;
+		    	  }
+		      }
+		    }   
+		    if (list.size() == 0) {
+		      return oldLine;
+		    } else {
+			    long newLine = 0;
+			      for (int i = 3; i > -1; i--) {
+			    	  if(!list.isEmpty())
+			    		  newLine |= list.remove() << i*4;
+			      }
+			      return newLine;
+		    }
 	  }
-
-	  private void setLine(int index, long line) {
-		  myTiles &= ~(LINE_BITMASK << index*16);
-		  myTiles |= line << index*16;
+	  
+	  
+	  private long reverseLine (long oldLine) {
+		  long newLine = 0;	
+		  for (int i = 0; i < 4; i++){
+			  newLine |= (((oldLine >>> i*4) & BITMASK) << (3-i)*4);
+		  }
+		  return newLine; 
 	  }
 	  
 	  // Returns binary corresponding to particular tile value. If a tile value is invalid, returns 1
@@ -341,10 +400,27 @@ public class Game2048Bit {
 		  return 1;
 	  }
 	  
+	  void benchmark() {
+		  Game2048Bit game = new Game2048Bit();
+		  long numMoves = 0;
+		  long startTime = System.currentTimeMillis();
+		  long time = 0;
+		  while(time < 10000) {
+			 game.makeMove(MOVES[(int)(Math.random()*4)]);
+			 numMoves++;
+			 time = System.currentTimeMillis() - startTime;
+		  }
+		  System.out.printf("Total Time: %d %nTotal Moves Made: %d %nMoves per Second: %d", time, numMoves, (numMoves/(time/1000)));
+	  }
+	  
+	  // Testing method
 	  public static void main(String args[]) {
 		  Scanner scan = new Scanner(System.in);
-		  Game2048Bit game2048 = new Game2048Bit();
-		  Game2048View view = new Game2048View(game2048);
+		  Game2048Bit g = new Game2048Bit();
+		  g.benchmark();
+		  
+		  
+		/*  Game2048View view = new Game2048View(game2048);
 			JFrame game = new JFrame();
 		    game.setTitle("2048 Game");
 		    game.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -355,9 +431,9 @@ public class Game2048Bit {
 		    game.setVisible(true);
 		  while(true){
 			  int i = scan.nextInt();
-			  game2048.myTiles = game2048.rotate(i);
+			  game2048.makeMove(i);
 			  view.repaint();
-		  }
+		  }*/
 	  }
 }
 

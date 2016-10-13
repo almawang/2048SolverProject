@@ -19,17 +19,16 @@ public class RandomPlayer implements Player{
 	}
 	
 	@Override
-	public int getMove(Game2048 game) {
+	public int getMove(Game2048Bit game) {
 		// Shuffles moves to prevent getting stuck with equal utilities
-		List<Integer> moves=game.getMoves();
-		Collections.shuffle(moves);
-		int bestMove=moves.get(0);
+		int[] moves=game.getMoves();
+		int bestMove=moves[(int)(moves.length*Math.random())];
 		
 		int bestUtility=0;
 		for(int move:moves){
 			int sum=0;
 			for(int i=0;i<runs;i++){
-				Game2048 newGame=(new Game2048(game));
+				Game2048Bit newGame=(new Game2048Bit(game));
 				if(newGame.makeMove(move)){
 					newGame.addTile();
 					sum+=randomUtility(newGame);
@@ -48,24 +47,23 @@ public class RandomPlayer implements Player{
 	/**
 	 * Recursively performs a random run
 	 */
-	private int randomUtility(Game2048 game) {
+	private int randomUtility(Game2048Bit game) {
 		nodesVisited++;
 		if(cutoffTest(game))
 			return utility(game);
 		// Shuffles moves to prevent getting stuck with equal utilities
-		List<Integer> moves=game.getMoves();
-		Collections.shuffle(moves);
-		if(game.makeMove(moves.get(0)))
+		int[] moves=game.getMoves();
+		if(game.makeMove(moves[(int)(Math.random()*moves.length)]))
 			game.addTile();
 		return randomUtility(game);
 		
 	}
 
-	private int utility(Game2048 game) {
+	private int utility(Game2048Bit game) {
 		return game.getScore();
 	}
 	
-	private boolean cutoffTest(Game2048 game) {
+	private boolean cutoffTest(Game2048Bit game) {
 		return game.gameOver();
 	}
 	

@@ -18,31 +18,32 @@ public class ExpectedMaxPlayer implements Player{
 	// Heuristics
 	private final boolean BLANKSPACES=true; // Prefers moves that provide more empty spaces
 	private final boolean EDGES=true;	// Higher value tiles on the edges and corners
-	private final boolean MAXCORNER=true;	// The highest value tile in a corner
-	private final boolean MONOTONIC=true;	// Penalty if edges not either decreasing or increasing
+	private final boolean MAXCORNER=false;	// The highest value tile in a corner
+	private final boolean MONOTONIC=false;	// Penalty if edges not either decreasing or increasing
 	
 	// Determine weighted utility based on probability of a particular new tile appearing
 	private final boolean PIECEUTILITY=true;	
 	// Limit for probability of set tile values occurring not to test. Only used with piece utility.	
-	private final double PROBCONSTANT=.00001;
+	private final double PROBCONSTANT=.000000001;
 	
 	private int maxDepth;
 	private int nodesVisited=0;
+	private int statesSearched = 0;
 	private int movesMade=0;
 	Map<Integer,Integer> transpositionTable=new HashMap<Integer,Integer>();
-	
 	
 	public ExpectedMaxPlayer(int d){
 		maxDepth=d;
 	}
-
+	
+	public int getStatesSearched(){
+		return statesSearched;
+	}
 
 	@Override
 	public int getMove(Game2048Bit game) {
-		// Shuffles moves to prevent getting stuck with equal utilities
-		List<Integer> moves=game.getMoves();
-		Collections.shuffle(moves);
-		int bestMove=moves.get(0);	
+		int[] moves=game.getMoves();
+		int bestMove=moves[(int)(Math.random()*moves.length)];	
 		int bestUtility=0;
 		for(int move:moves){
 			if(game.makeMove(move)){
@@ -73,6 +74,7 @@ public class ExpectedMaxPlayer implements Player{
 	 * @return
 	 */
 	private int maxUtility(Game2048Bit game, int depth, int numFours){
+		statesSearched++;
 		if(transpositionTable.containsKey(game.hashCode()))
 			return transpositionTable.get(game.hashCode());
 		nodesVisited++;
@@ -84,7 +86,7 @@ public class ExpectedMaxPlayer implements Player{
 			return util;
 		}
 		
-		List<Integer> moves=game.getMoves();
+		int[] moves=game.getMoves();
 		int bestUtility=0;
 		for(int move:moves){
 			if(game.makeMove(move)){
@@ -135,15 +137,19 @@ public class ExpectedMaxPlayer implements Player{
 	
 	public void printStats(){
 		System.out.println("Number of nodes visited: "+nodesVisited+
-				"\nNumber of moves: "+ movesMade);
+				"\nNumber of moves: "+ movesMade +
+				"\nStates searched: "+ statesSearched);
 	}
 	
 	private int utility(Game2048Bit game) {
 		if(game.gameOver() && !game.winGame())
 			return 0;
-		int score=game.getScore();
+		int score=0;
+		for (int n = 0; n<16; n++) {
+			score += game.tileAt(n);
+		}
 		if(BLANKSPACES)
-			score+=10*game.availableSpace().size();
+			score+=100*game.availableSpace().size();
 		if(EDGES){
 			for(int x=0;x<4;x++){
 				score+=game.tileAt(x,0);
